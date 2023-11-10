@@ -29,6 +29,8 @@ module.exports = {
         yellow:"#ffc220",
         hoverBg:"#004f9a",
         lightText:"#46474a",
+        buttonMinAdd:"#74767c"
+
       },
       boxShadow:{
         bannerShadow:"0 1px 2px 1px #00000026"

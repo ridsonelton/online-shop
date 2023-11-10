@@ -6,20 +6,41 @@ import {AiOutlineHeart,AiOutlineUser} from 'react-icons/ai'
 import {BsCart2} from 'react-icons/bs'
 import NavbarBottom from './NavbarBottom'
 import Link from 'next/link'
-import {useSelector} from 'react-redux'
+import {useDispatch, useSelector} from 'react-redux'
 import {useEffect, useState} from 'react'
+import FormatPrice from './FormatPrice'
+import { useSession, signIn, signOut } from "next-auth/react"
+import { addUser, removeUser } from '@/redux/shopperSlice'
 
 export default function Navbar() {
+    const {data: session} = useSession()
+    const dispatch = useDispatch()
+    console.log(session)
     const productData = useSelector((state:any)=>state.shopper.productData)
-    const [totalAmt, setTotalAmt] = useState("")
+    const userInfo =useSelector((state:any)=>state.shopper.userInfo)
+    const [totalAmt, setTotalAmt] = useState(0)
 
+    useEffect(()=>{
+        if(session){
+            dispatch(addUser({
+                name:session.user?.name,
+                email:session.user?.email,
+                image:session.user?.image,
+            }))
+        }else{
+            dispatch(removeUser())
+        }
+
+    },[session,dispatch])
     useEffect(()=>{
         let price = 0
         productData.map((item:any)=>{
             price += item.price * item.quantity
             return price
         })
-        setTotalAmt(price.toFixed(2))
+
+
+        setTotalAmt(price)
     },[productData])
   return (
     <div className='w-full bg-blue text-white sticky top-0 z-50'>
@@ -73,7 +94,17 @@ export default function Navbar() {
         </div>
     {/* Myitem end */}
     {/* Account start */}
-        <div className='navBarHover'>
+
+    {userInfo ? (
+    <div onClick={()=>signOut()} className='navBarHover'>
+            <Image className='w-10 rounded-full object-cover' width={500} height={500} src={userInfo.image} alt='userImage'/>
+            <div>
+                <p className='text-xs'>Sign Out</p>
+                <h2 className='text-base font-semibold -mt-1'>{userInfo.name}</h2>
+               
+            </div>
+        </div>) : (
+            <div onClick={()=>signIn()} className='navBarHover'>
             <AiOutlineUser/>
             <div>
                 <p className='text-xs'>Sign In</p>
@@ -81,12 +112,16 @@ export default function Navbar() {
                
             </div>
         </div>
+        )}
+        
     {/* Account end */}
     {/* Cart start */}
        <Link href="/cart">
        <div className='flex flex-col justify-center items-center gap-2 h-12 px-5 rounded-full bg-transparent hover:bg-hoverBg duration-300 relative cursor-pointer'>
             <BsCart2 className='text-2xl'/>
-            <p className='-mt-2 text-[10px]'>{totalAmt}￥</p>
+            <p className='-mt-2 text-[10px]'>
+                <FormatPrice amount={totalAmt}/>
+            </p>
             <span className='absolute w-4 h-4 bg-yellow text-black top-0 right-4 rounded-full flex items-center justify-center text-xs'>{productData.length > 0 ? productData.length : 0}</span>
         </div></Link>
     {/* Cart end */}
